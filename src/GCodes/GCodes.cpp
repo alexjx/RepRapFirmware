@@ -3301,7 +3301,16 @@ void GCodes::EmergencyStop()
 // 0 = running a system macro automatically
 bool GCodes::DoFileMacro(GCodeBuffer& gb, const char* fileName, bool reportMissing, int codeRunning)
 {
-	FileStore * const f = platform.OpenSysFile(fileName, OpenMode::read);
+	FileStore * f = platform.OpenSysFile(fileName, OpenMode::read);
+
+	// fallback to macro dir if it's from M98
+	if (f == nullptr)
+	{
+		if (codeRunning == 98) {
+			f = platform.OpenFile(platform.GetMacroDir(), fileName, OpenMode::read, 0);
+		}
+	}
+
 	if (f == nullptr)
 	{
 		if (reportMissing)
