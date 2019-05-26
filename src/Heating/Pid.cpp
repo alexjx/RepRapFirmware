@@ -400,7 +400,7 @@ void PID::Spin()
 						case HeaterProtectionAction::GenerateFault:
 							mode = HeaterMode::fault;
 							reprap.GetGCodes().HandleHeaterFault(heater);
-							platform.MessageF(ErrorMessage, "Heating fault on heater %d\n", heater);
+							platform.MessageF(ErrorMessage, "Heating fault on heater %d. Exceeded protected range\n", heater);
 							break;
 
 						case HeaterProtectionAction::TemporarySwitchOff:
