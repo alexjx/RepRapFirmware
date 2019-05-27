@@ -136,6 +136,8 @@ public:
 	static float SinfCosf(float angle);						// helper function for diagnostic tests
 	static double SinCos(double angle);						// helper function for diagnostic tests
 
+	bool IsBusy() const; // helper function for testing idle
+
 #ifdef RTOS
 	void KickHeatTaskWatchdog() { heatTaskIdleTicks = 0; }
 #endif

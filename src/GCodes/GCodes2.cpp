@@ -69,6 +69,7 @@ bool GCodes::ActOnCode(GCodeBuffer& gb, const StringRef& reply)
 	case 'G':
 		if (gb.HasCommandNumber())
 		{
+			platform.UpdateLedActivityTracker();
 			return HandleGcode(gb, reply);
 		}
 		break;
@@ -81,6 +82,9 @@ bool GCodes::ActOnCode(GCodeBuffer& gb, const StringRef& reply)
 		break;
 
 	case 'T':
+		if (gb.HasCommandNumber()) {
+			platform.UpdateLedActivityTracker();
+		}
 		return HandleTcode(gb, reply);
 
 	default:
@@ -4376,6 +4380,40 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 									? (uint16_t)SoftwareResetReason::erase
 									: (uint16_t)SoftwareResetReason::user;
 			platform.SoftwareReset(reason);			// doesn't return
+		}
+		break;
+
+	case 5001:
+		{
+			auto brightness = platform.GetLedBrightness();
+			auto timeout = platform.GetLedIdleTimeout();
+			auto logicalPin = platform.GetLedLogicalPin();
+			auto freq = platform.GetLedFrequency();
+
+			if (gb.Seen('P')) {
+				logicalPin = gb.GetUIValue();
+				platform.SetLedLogicalPin(logicalPin);
+			}
+
+			if (gb.Seen('F')) {
+				freq = gb.GetUIValue();
+				platform.SetLedFrequency(freq);
+			}
+
+			if (gb.Seen('S')) {
+				brightness = (uint32_t)gb.GetFValue();
+				if (brightness > 100) {
+					brightness = 100;
+				}
+				platform.SetLedBrightness(brightness);
+			}
+
+			if (gb.Seen('T')) {
+				timeout = gb.GetUIValue();
+				platform.SetLedIdleTimeout(timeout);
+			}
+
+			reply.printf("Led with pin %d brightness is %ld%% with timeout %ld minutes", logicalPin, brightness, timeout);
 		}
 		break;
 

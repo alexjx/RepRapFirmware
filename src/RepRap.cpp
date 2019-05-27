@@ -2365,6 +2365,23 @@ void RepRap::ReportInternalError(const char *file, const char *func, int line) c
 	platform->MessageF(ErrorMessage, "Internal Error in %s at %s(%d)\n", func, file, line);
 }
 
+// Helper function for testing idle status
+bool RepRap::IsBusy() const
+{
+	return 	(processingConfig)										||	// reading config
+			(gCodes->IsFlashing())									||	// upgrade firmware
+			(IsStopped())											||	// halted
+#if HAS_VOLTAGE_MONITOR
+			(!platform->HasVinPower() && !gCodes->IsSimulating())	||	// simulating
+#endif
+			(gCodes->IsPausing())									||	// pausing
+			(gCodes->IsResuming())									||	// resumed
+			(printMonitor->IsPrinting())							||	// printing
+			(gCodes->IsDoingToolChange())							||	// tool changing
+			(gCodes->DoingFileMacro() || !move->NoLiveMovement())		// running macro
+			;
+}
+
 #if SUPPORT_12864_LCD
 
 const char *RepRap::GetLatestMessage(uint16_t& sequence) const

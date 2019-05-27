@@ -172,7 +172,9 @@ Platform::Platform()
 	  nextDriveToPoll(0),
 #endif
 	  lastFanCheckTime(0), auxGCodeReply(nullptr), sysDir(nullptr), tickState(0), debugCode(0),
-	  lastWarningMillis(0), deliberateError(false)
+	  lastWarningMillis(0), ledLogicalPin(NoLogicalPin), ledFrequency(DefaultPinWritePwmFreq),
+	  ledBrightness(0), ledIdleTimeout(0), ledState(Platform::LedState::off), ledLastActiveMillis(0),
+	  deliberateError(false)
 {
 	massStorage = new MassStorage(this);
 }
@@ -1717,6 +1719,31 @@ void Platform::Spin()
 	if (logger != nullptr)
 	{
 		logger->Flush(false);
+	}
+
+	// Led control
+	if (ledLogicalPin != NoLogicalPin && ledBrightness && ledIdleTimeout)
+	{
+		auto isBusy = reprap.IsBusy();
+		// if we've been idle for a while turn the led off
+		if (ledState == LedState::on && !isBusy && now >= ledLastActiveMillis + ledIdleTimeout)
+		{
+			SetLedBrightness(0, false);
+			ledState = LedState::timeout;
+		}
+		// if we have activities, turn led back record the time
+		else if (isBusy || now < ledLastActiveMillis + ledIdleTimeout)
+		{
+			// update time stamp only if we have busy flag, since
+			// other cases the timestamp is updated directly
+			if (isBusy) {
+				ledLastActiveMillis = now;
+			}
+			// if the led is timeout, turn it back on
+			if (ledState == LedState::timeout) {
+				SetLedBrightness(ledBrightness, false);
+			}
+		}
 	}
 }
 
@@ -4891,6 +4918,37 @@ void Platform::Tick()
 	}
 
 	AnalogInStartConversion();
+}
+
+bool Platform::SetLedBrightness(uint32_t brightness, bool persist)
+{
+	Pin pin;
+	bool invert;
+	if (!GetFirmwarePin(ledLogicalPin, PinAccess::pwm, pin, invert))
+	{
+		return false;
+	}
+
+	// save status
+	if (persist)
+	{
+		ledBrightness = brightness;
+	}
+
+	// alter state
+	if (brightness)
+	{
+		ledState = LedState::on;
+	}
+
+	IoPort::WriteAnalog(pin, (float)brightness / 100.0, ledFrequency);
+	return true;
+}
+
+void Platform::SetLedIdleTimeout(uint32_t timeout)
+{
+	ledIdleTimeout = timeout * 60000;
+	ledLastActiveMillis = millis();
 }
 
 // Pragma pop_options is not supported on this platform

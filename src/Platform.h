@@ -609,6 +609,17 @@ public:
 	void SetLaserPwmFrequency(float freq);
 	float GetLaserPwmFrequency() const { return laserPort.GetFrequency(); }
 
+	// LED Control
+	LogicalPin GetLedLogicalPin() const { return ledLogicalPin; }
+	void SetLedLogicalPin(LogicalPin pin) { ledLogicalPin = pin; }
+	uint16_t GetLedFrequency() const { return ledFrequency; }
+	void SetLedFrequency(uint16_t freq) { ledFrequency = freq; }
+	bool SetLedBrightness(uint32_t value, bool persist=true);
+	uint32_t GetLedBrightness() const { return ledBrightness; }
+	void SetLedIdleTimeout(uint32_t timeout);
+	uint32_t GetLedIdleTimeout() const { return ledIdleTimeout / 60000; }
+	void UpdateLedActivityTracker() { ledLastActiveMillis = millis(); }
+
 	// Misc
 
 #if SAM4E || SAM4S || SAME70
@@ -932,6 +943,20 @@ private:
 
 	// Direct pin manipulation
 	int8_t logicalPinModes[HighestLogicalPin + 1];		// what mode each logical pin is set to - would ideally be class PinMode not int8_t
+
+	// Led
+	enum class LedState : uint8_t
+	{
+		off = 0,
+		on,
+		timeout
+	};
+	LogicalPin ledLogicalPin;
+	uint16_t ledFrequency;
+	uint32_t ledBrightness;
+	uint32_t ledIdleTimeout;
+	LedState ledState;
+	uint32_t ledLastActiveMillis;
 
 	// Misc
 	bool deliberateError;								// true if we deliberately caused an exception for testing purposes
