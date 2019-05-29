@@ -4940,6 +4940,10 @@ bool Platform::SetLedBrightness(uint32_t brightness, bool persist)
 	{
 		ledState = LedState::on;
 	}
+	else
+	{
+		ledState = LedState::off;
+	}
 
 	IoPort::WriteAnalog(pin, (float)brightness / 100.0, ledFrequency);
 	return true;
