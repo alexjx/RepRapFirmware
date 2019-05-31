@@ -166,11 +166,15 @@ void GCodes::Init()
 	}
 	lastDefaultFanSpeed = pausedDefaultFanSpeed = 0.0;
 
-	retractLength = DefaultRetractLength;
-	retractExtra = 0.0;
+	for (auto& p : retractParams)
+	{
+		p.retractLength = DefaultRetractLength;
+		p.retractExtra = 0.0;
+		p.retractSpeed = p.unRetractSpeed = DefaultRetractSpeed * SecondsToMinutes;
+	}
 	retractHop = 0.0;
-	retractSpeed = unRetractSpeed = DefaultRetractSpeed * SecondsToMinutes;
 	isRetracted = false;
+
 	lastAuxStatusReportType = -1;						// no status reports requested yet
 
 	laserMaxPower = DefaultMaxLaserPower;
@@ -1497,11 +1501,13 @@ void GCodes::RunStateMachine(GCodeBuffer& gb, const StringRef& reply)
 				const uint32_t yAxes = reprap.GetCurrentYAxes();
 				reprap.GetMove().GetCurrentUserPosition(moveBuffer.coords, 0, xAxes, yAxes);
 				SetMoveBufferDefaults();
-				for (size_t i = 0; i < tool->DriveCount(); ++i)
-				{
-					moveBuffer.coords[numTotalAxes + tool->Drive(i)] = retractLength + retractExtra;
-				}
-				moveBuffer.feedRate = unRetractSpeed;
+
+				moveBuffer.feedRate = platform.MaxFeedrate(E0_AXIS);
+				tool->IterateExtruders([this](unsigned int extruder){
+					moveBuffer.coords[numTotalAxes + extruder] = retractParams[extruder].retractLength + retractParams[extruder].retractExtra;
+					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].unRetractSpeed);
+				});
+
 				moveBuffer.isFirmwareRetraction = true;
 				moveBuffer.filePos = (&gb == fileGCode) ? gb.MachineState().fileState.GetPosition() - fileInput->BytesCached() : noFilePosition;
 				moveBuffer.canPauseAfter = true;
@@ -4468,10 +4474,11 @@ void GCodes::SetToolHeaters(Tool *tool, float temperature, bool both)
 	}
 }
 
+
 // Retract or un-retract filament, returning true if movement has been queued, false if this needs to be called again
 GCodeResult GCodes::RetractFilament(GCodeBuffer& gb, bool retract)
 {
-	if (retract != isRetracted && (retractLength != 0.0 || retractHop != 0.0 || (!retract && retractExtra != 0.0)))
+	if (retract != isRetracted)
 	{
 		if (!LockMovement(gb))
 		{
@@ -4500,11 +4507,11 @@ GCodeResult GCodes::RetractFilament(GCodeBuffer& gb, bool retract)
 			const Tool * const tool = reprap.GetCurrentTool();
 			if (tool != nullptr)
 			{
-				for (size_t i = 0; i < tool->DriveCount(); ++i)
-				{
-					moveBuffer.coords[numTotalAxes + tool->Drive(i)] = -retractLength;
-				}
-				moveBuffer.feedRate = retractSpeed;
+				moveBuffer.feedRate = 60.0;
+				tool->IterateExtruders([this](unsigned int extruder){
+					moveBuffer.coords[numTotalAxes + extruder] = -retractParams[extruder].retractLength;
+					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].retractSpeed);
+				});
 				moveBuffer.canPauseAfter = false;			// don't pause after a retraction because that could cause too much retraction
 				NewMoveAvailable(1);
 			}
@@ -4529,11 +4536,11 @@ GCodeResult GCodes::RetractFilament(GCodeBuffer& gb, bool retract)
 			const Tool * const tool = reprap.GetCurrentTool();
 			if (tool != nullptr)
 			{
-				for (size_t i = 0; i < tool->DriveCount(); ++i)
-				{
-					moveBuffer.coords[numTotalAxes + tool->Drive(i)] = retractLength + retractExtra;
-				}
-				moveBuffer.feedRate = unRetractSpeed;
+				moveBuffer.feedRate = 60.0;
+				tool->IterateExtruders([this](unsigned int extruder){
+					moveBuffer.coords[numTotalAxes + extruder] = retractParams[extruder].retractLength + retractParams[extruder].retractExtra;
+					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].unRetractSpeed);
+				});
 				moveBuffer.canPauseAfter = true;
 				NewMoveAvailable(1);
 			}

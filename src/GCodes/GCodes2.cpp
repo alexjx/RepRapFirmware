@@ -1982,25 +1982,58 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 
 	case 207: // Set firmware retraction details
 		{
+			Tool* tool = reprap.GetCurrentTool();
+			if (gb.Seen('P'))
+			{
+				auto toolNumber = gb.GetIValue();
+				tool = reprap.GetTool(toolNumber);
+			}
+			if (!tool)
+			{
+				reply.printf("Invalid tool or no tool selected");
+				result = GCodeResult::error;
+				break;
+			}
+
 			bool seen = false;
 			if (gb.Seen('S'))
 			{
-				retractLength = max<float>(gb.GetFValue(), 0.0);
+				int index = 0;
+				float values[MaxExtruders] = {0};
+				gb.GetFloatArray(values, numExtruders, true);
+				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
+					retractParams[extruder].retractLength = max<float>(values[index++], 0.0);
+				});
 				seen = true;
 			}
 			if (gb.Seen('R'))	// must do this one after 'S'
 			{
-				retractExtra = max<float>(gb.GetFValue(), -retractLength);
+				int index = 0;
+				float values[MaxExtruders] = {0};
+				gb.GetFloatArray(values, numExtruders, true);
+				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
+					retractParams[extruder].retractExtra = max<float>(values[index++], -retractParams[extruder].retractLength);
+				});
 				seen = true;
 			}
 			if (gb.Seen('F'))
 			{
-				unRetractSpeed = retractSpeed = max<float>(gb.GetFValue(), 60.0) * SecondsToMinutes;
+				int index = 0;
+				float values[MaxExtruders] = {0};
+				gb.GetFloatArray(values, numExtruders, true);
+				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
+					retractParams[extruder].unRetractSpeed = retractParams[extruder].retractSpeed = max<float>(values[index++], 60.0) * SecondsToMinutes;
+				});
 				seen = true;
 			}
 			if (gb.Seen('T'))	// must do this one after 'F'
 			{
-				unRetractSpeed = max<float>(gb.GetFValue(), 60.0) * SecondsToMinutes;
+				int index = 0;
+				float values[MaxExtruders] = {0};
+				gb.GetFloatArray(values, numExtruders, true);
+				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
+					retractParams[extruder].unRetractSpeed = max<float>(values[index++], 60.0) * SecondsToMinutes;
+				});
 				seen = true;
 			}
 			if (gb.Seen('Z'))
@@ -2008,10 +2041,17 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 				retractHop = max<float>(gb.GetFValue(), 0.0);
 				seen = true;
 			}
+
 			if (!seen)
 			{
-				reply.printf("Retraction/un-retraction settings: length %.2f/%.2fmm, speed %d/%dmm/min, Z hop %.2fmm",
-					(double)retractLength, (double)(retractLength + retractExtra), (int)(retractSpeed * MinutesToSeconds), (int)(unRetractSpeed * MinutesToSeconds), (double)retractHop);
+				reply.copy("Retraction/un-retraction settings:");
+				tool->IterateExtruders([this, &reply](unsigned int extruder) {
+					auto &p = retractParams[extruder];
+					reply.catf("\n extruder %d: length %.2f/%.2fmm, speed %d/%dmm/min",
+							extruder, (double)p.retractLength, (double)(p.retractLength + p.retractExtra),
+							(int)(p.retractSpeed * MinutesToSeconds), (int)(p.unRetractSpeed * MinutesToSeconds));
+				});
+				reply.catf("\n Z hop %.2fmm", retractHop);
 			}
 		}
 		break;
