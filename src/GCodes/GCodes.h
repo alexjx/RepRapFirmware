@@ -240,6 +240,14 @@ public:
 	unsigned int GetWorkplaceCoordinateSystemNumber() const { return currentCoordinateSystem + 1; }
 #endif
 
+	struct RetractParam {
+		float retractLength, retractExtra;			// retraction length and extra length to un-retract
+		float retractSpeed;							// retract speed in mm/min
+		float unRetractSpeed;						// un=retract speed in mm/min
+	};
+
+	RetractParam& GetRetractParams(unsigned int extruder) { return retractParams[extruder]; }
+
 protected:
 	DECLARE_OBJECT_MODEL
 
@@ -567,11 +575,7 @@ private:
 	bool updateFileWhenSimulationComplete;		// true if simulated time should be appended to the file
 
 	// Firmware retraction settings
-	struct {
-		float retractLength, retractExtra;			// retraction length and extra length to un-retract
-		float retractSpeed;							// retract speed in mm/min
-		float unRetractSpeed;						// un=retract speed in mm/min
-	} retractParams[MaxExtruders];
+	RetractParam retractParams[MaxExtruders];
 	// retract state is global... since G10 command doesn't chose extruder, so it will retract all
 	bool isRetracted;								// true if filament has been firmware-retracted
 	float retractHop;								// Z hop when retracting

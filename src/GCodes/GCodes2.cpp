@@ -2051,7 +2051,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 							extruder, (double)p.retractLength, (double)(p.retractLength + p.retractExtra),
 							(int)(p.retractSpeed * MinutesToSeconds), (int)(p.unRetractSpeed * MinutesToSeconds));
 				});
-				reply.catf("\n Z hop %.2fmm", retractHop);
+				reply.catf("\n Z hop %.2fmm", (double)retractHop);
 			}
 		}
 		break;

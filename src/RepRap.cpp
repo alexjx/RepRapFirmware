@@ -1368,6 +1368,21 @@ OutputBuffer *RepRap::GetStatusResponse(uint8_t type, ResponseSource source)
 					}
 				}
 
+				// Retraction Info
+				response->cat("],\"retraction\":[{");
+				for (size_t drive = 0; drive < tool->DriveCount(); drive++)
+				{
+					auto& p = GetGCodes().GetRetractParams(tool->Drive(drive));
+					response->catf("\"length\":%.2f,\"extra\":%.2f,\"speed\":%.2f,\"un-speed\":%.2f}",
+							(double)p.retractLength, (double)p.retractExtra,
+							(double)(p.retractSpeed * MinutesToSeconds),
+							(double)(p.unRetractSpeed * MinutesToSeconds));
+					if (drive + 1 < tool->DriveCount())
+					{
+						response->cat(',');
+					}
+				}
+
 				// Axis mapping
 				response->cat("],\"axisMap\":[[");
 				bool first = true;
