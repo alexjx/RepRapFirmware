@@ -4406,6 +4406,7 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 					brightness = 100;
 				}
 				platform.SetLedBrightness(brightness);
+				platform.UpdateLedActivityTracker(); // ensure we will not be turned off instantly
 			}
 
 			if (gb.Seen('T')) {
