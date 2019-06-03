@@ -2018,21 +2018,17 @@ bool GCodes::HandleMcode(GCodeBuffer& gb, const StringRef& reply)
 			}
 			if (gb.Seen('F'))
 			{
-				int index = 0;
-				float values[MaxExtruders] = {0};
-				gb.GetFloatArray(values, numExtruders, true);
-				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
-					retractParams[extruder].unRetractSpeed = retractParams[extruder].retractSpeed = max<float>(values[index++], 60.0) * SecondsToMinutes;
+				auto retractSpeed = gb.GetFValue();
+				tool->IterateExtruders([this, retractSpeed](unsigned int extruder) {
+					retractParams[extruder].unRetractSpeed = retractParams[extruder].retractSpeed = max<float>(retractSpeed, 60.0) * SecondsToMinutes;
 				});
 				seen = true;
 			}
 			if (gb.Seen('T'))	// must do this one after 'F'
 			{
-				int index = 0;
-				float values[MaxExtruders] = {0};
-				gb.GetFloatArray(values, numExtruders, true);
-				tool->IterateExtruders([this, &values, &index](unsigned int extruder) {
-					retractParams[extruder].unRetractSpeed = max<float>(values[index++], 60.0) * SecondsToMinutes;
+				auto unRetractSpeed = gb.GetFValue();
+				tool->IterateExtruders([this, unRetractSpeed](unsigned int extruder) {
+					retractParams[extruder].unRetractSpeed = max<float>(unRetractSpeed, 60.0) * SecondsToMinutes;
 				});
 				seen = true;
 			}

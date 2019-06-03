@@ -577,8 +577,8 @@ private:
 	// Firmware retraction settings
 	RetractParam retractParams[MaxExtruders];
 	// retract state is global... since G10 command doesn't chose extruder, so it will retract all
-	bool isRetracted;								// true if filament has been firmware-retracted
-	float retractHop;								// Z hop when retracting
+	bool isRetracted;							// true if filament has been firmware-retracted
+	float retractHop;							// Z hop when retracting
 
 	// Triggers
 	Trigger triggers[MaxTriggers];				// Trigger conditions

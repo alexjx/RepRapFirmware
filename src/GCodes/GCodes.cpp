@@ -1502,11 +1502,12 @@ void GCodes::RunStateMachine(GCodeBuffer& gb, const StringRef& reply)
 				reprap.GetMove().GetCurrentUserPosition(moveBuffer.coords, 0, xAxes, yAxes);
 				SetMoveBufferDefaults();
 
-				moveBuffer.feedRate = platform.MaxFeedrate(E0_AXIS);
 				tool->IterateExtruders([this](unsigned int extruder){
 					moveBuffer.coords[numTotalAxes + extruder] = retractParams[extruder].retractLength + retractParams[extruder].retractExtra;
-					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].unRetractSpeed);
 				});
+
+				// all extruders on this tool should have the same un-retract speed, we use the first
+				moveBuffer.feedRate = retractParams[tool->Drive(0)].unRetractSpeed;
 
 				moveBuffer.isFirmwareRetraction = true;
 				moveBuffer.filePos = (&gb == fileGCode) ? gb.MachineState().fileState.GetPosition() - fileInput->BytesCached() : noFilePosition;
@@ -4507,11 +4508,11 @@ GCodeResult GCodes::RetractFilament(GCodeBuffer& gb, bool retract)
 			const Tool * const tool = reprap.GetCurrentTool();
 			if (tool != nullptr)
 			{
-				moveBuffer.feedRate = 60.0;
-				tool->IterateExtruders([this](unsigned int extruder){
+				tool->IterateExtruders([this](unsigned int extruder) {
 					moveBuffer.coords[numTotalAxes + extruder] = -retractParams[extruder].retractLength;
-					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].retractSpeed);
 				});
+				// all extruders on the same tool will share the same speed, so just use the first one
+				moveBuffer.feedRate = retractParams[tool->Drive(0)].retractSpeed;
 				moveBuffer.canPauseAfter = false;			// don't pause after a retraction because that could cause too much retraction
 				NewMoveAvailable(1);
 			}
@@ -4536,11 +4537,10 @@ GCodeResult GCodes::RetractFilament(GCodeBuffer& gb, bool retract)
 			const Tool * const tool = reprap.GetCurrentTool();
 			if (tool != nullptr)
 			{
-				moveBuffer.feedRate = 60.0;
-				tool->IterateExtruders([this](unsigned int extruder){
+				tool->IterateExtruders([this](unsigned int extruder) {
 					moveBuffer.coords[numTotalAxes + extruder] = retractParams[extruder].retractLength + retractParams[extruder].retractExtra;
-					moveBuffer.feedRate = min<float>(moveBuffer.feedRate, retractParams[extruder].unRetractSpeed);
 				});
+				moveBuffer.feedRate = retractParams[tool->Drive(0)].unRetractSpeed;
 				moveBuffer.canPauseAfter = true;
 				NewMoveAvailable(1);
 			}
