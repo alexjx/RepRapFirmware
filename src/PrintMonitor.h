@@ -63,6 +63,7 @@ class PrintMonitor
 		float GetFirstLayerHeight() const;
 
 		const char *GetPrintingFilename() const { return (isPrinting) ? filenameBeingPrinted.c_str() : nullptr; }
+		FilePosition GetPrintingFileSize() const { return (isPrinting) ? printingFileInfo.fileSize : 0; }
 		bool GetPrintingFileInfo(GCodeFileInfo& info);
 
 	private:

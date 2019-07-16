@@ -3708,6 +3708,18 @@ void GCodes::StartPrinting(bool fromStart)
 	platform.MessageF(LogMessage,
 						(simulationMode == 0) ? "Started printing file %s\n" : "Started simulating printing file %s\n",
 							reprap.GetPrintMonitor().GetPrintingFilename());
+
+	// try implement the start SD printing protocol for octoprint
+	if (simulationMode == 0) {
+		GCodeFileInfo finfo;
+		const char* filename = reprap.GetPrintMonitor().GetPrintingFilename();
+		auto fileSize = reprap.GetPrintMonitor().GetPrintingFileSize();
+		if (!filename) {
+			filename = "unknown_file_name";
+		}
+		platform.MessageF(UsbMessage, "File opened: %s Size: %lu\n", filename, fileSize);
+	}
+
 	if (fromStart)
 	{
 		// Get the fileGCode to execute the start macro so that any M82/M83 codes will be executed in the correct context
