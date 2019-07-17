@@ -3639,7 +3639,6 @@ void GCodes::GetCurrentCoordinates(const StringRef& s) const
 	reprap.GetMove().LiveCoordinates(liveCoordinates, reprap.GetCurrentXAxes(), reprap.GetCurrentYAxes());
 
 	// Now the extruder coordinates
-	s.catf("E:%.1f ", (double)virtualExtruderPosition);
 	for (size_t i = numTotalAxes; i < MaxTotalDrivers; i++)
 	{
 		s.catf("E%u:%.1f ", i - numTotalAxes, (double)liveCoordinates[i]);
