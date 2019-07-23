@@ -3717,6 +3717,8 @@ void GCodes::StartPrinting(bool fromStart)
 			filename = "unknown_file_name";
 		}
 		platform.MessageF(UsbMessage, "File opened: %s Size: %lu\n", filename, fileSize);
+		// following one is important to make timelapse work
+		platform.MessageF(UsbMessage, "File selected\n");
 	}
 
 	if (fromStart)
