@@ -27,6 +27,7 @@ constexpr size_t NumFirmwareUpdateModules = 4;		// 3 modules, plus one for manua
 #define SUPPORT_LASER			0					// support laser cutters and engravers using G1 S parameter
 #define SUPPORT_IOBITS			0					// set to support P parameter in G0/G1 commands
 #define SUPPORT_DHT_SENSOR		0					// set nonzero to support DHT temperature/humidity sensors
+#define SUPPORT_HDC1080_SENSOR	1					// set nonzero to support HDC1080 temperature/humidity sensors
 #define SUPPORT_WORKPLACE_COORDINATES	0			// set nonzero to support G10 L2 and G53..59
 #define SUPPORT_12864_LCD		0					// set nonzero to support 12864 LCD and rotary encoder
 #define SUPPORT_OBJECT_MODEL	1
@@ -123,6 +124,7 @@ constexpr Pin SpiTempSensorCsPins[MaxSpiTempSensors] = { 56, 27 };
 #else
 
 constexpr size_t MaxSpiTempSensors = 8;
+constexpr size_t MaxHdc1080Sensors = 1;
 
 // Digital pins the 31855s have their select lines tied to
 constexpr Pin SpiTempSensorCsPins[MaxSpiTempSensors] = { 28, 50, 51, 52, 24, 97, 98, 99 };	// SPI0_CS1, SPI0_CS2, CS3, CS4, CS5, CS6, CS7, CS8

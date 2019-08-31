@@ -4,6 +4,7 @@
 #include "ThermocoupleSensor31855.h"
 #include "ThermocoupleSensor31856.h"
 #include "RtdSensor31865.h"
+
 #include "GCodes/GCodeBuffer.h"
 
 #if HAS_CPU_TEMP_SENSOR
@@ -12,6 +13,10 @@
 
 #if SUPPORT_DHT_SENSOR
 #include "DhtSensor.h"
+#endif
+
+#if SUPPORT_HDC1080_SENSOR
+#include "Hdc1080TemperatureSensor.h"
 #endif
 
 #if HAS_SMART_DRIVERS
@@ -129,6 +134,16 @@ TemperatureSensor *TemperatureSensor::Create(unsigned int channel)
 	else if (FirstDhtHumidityChannel <= channel && channel < FirstDhtHumidityChannel + MaxSpiTempSensors)
 	{
 		ts = new DhtHumiditySensor(channel);
+	}
+#endif
+#if SUPPORT_HDC1080_SENSOR
+	else if (FirstHdc1080TemperatureChannel <= channel && channel < FirstHdc1080TemperatureChannel + MaxHdc1080Sensors)
+	{
+		ts = new Hdc1080TemperatureSensor(channel);
+	}
+	else if (FirstHdc1080HumidityChannel <= channel && channel < FirstHdc1080HumidityChannel + MaxHdc1080Sensors)
+	{
+		ts = new Hdc1080HumiditySensor(channel);
 	}
 #endif
 #if HAS_CPU_TEMP_SENSOR

@@ -28,6 +28,10 @@ Licence: GPL
 # include "Sensors/DhtSensor.h"
 #endif
 
+#if SUPPORT_HDC1080_SENSOR
+# include "Sensors/Hdc1080TemperatureSensor.h"
+#endif
+
 #ifdef RTOS
 
 # include "Tasks.h"
@@ -147,6 +151,10 @@ void Heat::Init()
 #if SUPPORT_DHT_SENSOR
 	// Initialise static fields of the DHT sensor
 	DhtSensorHardwareInterface::InitStatic();
+#endif
+
+#if SUPPORT_HDC1080_SENSOR
+	Hdc1080HwInterface::InitStatic();
 #endif
 
 	extrusionMinTemp = HOT_ENOUGH_TO_EXTRUDE;

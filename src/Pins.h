@@ -135,4 +135,8 @@
 # error DHT sensor support requires RTOS
 #endif
 
+#if SUPPORT_HDC1080_SENSOR && !defined(RTOS)
+# error HDC1080 sensor support requires RTOS
+#endif
+
 #endif // PINS_H__
